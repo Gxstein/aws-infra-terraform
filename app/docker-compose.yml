@@ -1,0 +1,36 @@
+# Local development: API + PostgreSQL, the same pair that runs on EC2 + RDS in AWS.
+#   docker compose up --build
+#   curl localhost:8000/health
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tasks
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d tasks"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    environment:
+      DB_HOST: db
+      DB_NAME: tasks
+      DB_USER: app
+      DB_PASSWORD: app
+      DB_SSLMODE: disable
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
