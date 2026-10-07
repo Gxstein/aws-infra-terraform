@@ -27,3 +27,18 @@ output "db_endpoint" {
   description = "Private DNS name of the PostgreSQL instance"
   value       = aws_db_instance.main.address
 }
+
+output "instance_id" {
+  description = "ID of the API host (GitHub variable INSTANCE_ID)"
+  value       = aws_instance.app.id
+}
+
+output "api_url" {
+  description = "Public URL of the API"
+  value       = "http://${aws_instance.app.public_dns}"
+}
+
+output "ssm_session_command" {
+  description = "Opens a shell on the API host without SSH"
+  value       = "aws ssm start-session --target ${aws_instance.app.id} --region ${var.aws_region}"
+}
