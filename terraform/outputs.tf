@@ -12,3 +12,13 @@ output "private_subnet_ids" {
   description = "Private subnets (one per AZ)"
   value       = aws_subnet.private[*].id
 }
+
+output "ecr_repository_name" {
+  description = "ECR repository name (GitHub variable ECR_REPOSITORY)"
+  value       = aws_ecr_repository.app.name
+}
+
+output "ecr_repository_url" {
+  description = "Full ECR repository URL"
+  value       = aws_ecr_repository.app.repository_url
+}
