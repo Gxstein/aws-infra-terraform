@@ -22,3 +22,8 @@ output "ecr_repository_url" {
   description = "Full ECR repository URL"
   value       = aws_ecr_repository.app.repository_url
 }
+
+output "db_endpoint" {
+  description = "Private DNS name of the PostgreSQL instance"
+  value       = aws_db_instance.main.address
+}
