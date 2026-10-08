@@ -32,6 +32,9 @@ resource "aws_db_instance" "main" {
   vpc_security_group_ids = [aws_security_group.db.id]
   publicly_accessible    = false
 
+  # Allows short-lived IAM tokens instead of the password (the API still uses the password today)
+  iam_database_authentication_enabled = true
+
   # Single-AZ keeps the lab cheap; switch multi_az on for production
   multi_az                        = var.environment == "prod"
   backup_retention_period         = 1

@@ -15,6 +15,7 @@ resource "aws_instance" "app" {
   subnet_id              = aws_subnet.public[0].id
   vpc_security_group_ids = [aws_security_group.app.id]
   iam_instance_profile   = aws_iam_instance_profile.app.name
+  ebs_optimized          = true # no extra cost on t3 instances
 
   # No key pair on purpose: shell access is done with SSM Session Manager
 
