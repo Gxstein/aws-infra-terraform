@@ -47,3 +47,8 @@ output "alerts_topic_arn" {
   description = "SNS topic that receives CloudWatch alarms"
   value       = aws_sns_topic.alerts.arn
 }
+
+output "github_actions_role_arn" {
+  description = "IAM role assumed by GitHub Actions (GitHub variable AWS_ROLE_ARN)"
+  value       = aws_iam_role.github_actions.arn
+}

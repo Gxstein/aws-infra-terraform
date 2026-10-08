@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars (ignored by git) and adjust
+aws_region         = "us-east-1"
+environment        = "dev"
+alert_email        = "voce@exemplo.com"
+monthly_budget_usd = 30
+state_bucket_name  = "aws-infra-tfstate-123456789012"
+
+# Restrict to your own IP if you want: ["203.0.113.10/32"]
+allowed_http_cidrs = ["0.0.0.0/0"]

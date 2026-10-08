@@ -108,3 +108,10 @@ variable "monthly_budget_usd" {
   type        = number
   default     = 30
 }
+
+# ---------- CI/CD ----------
+
+variable "state_bucket_name" {
+  description = "S3 bucket that stores the Terraform state (output of ../bootstrap); the CI role gets access to it"
+  type        = string
+}
