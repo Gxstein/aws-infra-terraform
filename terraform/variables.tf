@@ -90,3 +90,21 @@ variable "db_username" {
   type        = string
   default     = "app_user"
 }
+
+# ---------- Monitoring and cost ----------
+
+variable "alert_email" {
+  description = "E-mail that receives CloudWatch alarms and AWS Budgets notifications (confirm the SNS subscription e-mail)"
+  type        = string
+
+  validation {
+    condition     = can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.alert_email))
+    error_message = "alert_email must be a valid e-mail address."
+  }
+}
+
+variable "monthly_budget_usd" {
+  description = "Monthly cost limit in USD for the AWS Budgets alert"
+  type        = number
+  default     = 30
+}

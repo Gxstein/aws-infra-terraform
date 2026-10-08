@@ -42,3 +42,8 @@ output "ssm_session_command" {
   description = "Opens a shell on the API host without SSH"
   value       = "aws ssm start-session --target ${aws_instance.app.id} --region ${var.aws_region}"
 }
+
+output "alerts_topic_arn" {
+  description = "SNS topic that receives CloudWatch alarms"
+  value       = aws_sns_topic.alerts.arn
+}
