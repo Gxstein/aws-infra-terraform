@@ -1,0 +1,29 @@
+# Checkov configuration used by CI (.github/workflows/terraform.yml).
+# Every skipped check below is a conscious trade-off for a low-cost lab
+# environment. The reasons are documented in docs/seguranca.md.
+framework:
+  - terraform
+compact: true
+skip-check:
+  # Cost: each customer managed KMS key costs about US$1/month
+  - CKV_AWS_158 # CloudWatch log groups encrypted with a CMK (default encryption is used)
+  - CKV_AWS_136 # ECR encrypted with a CMK (AES-256 is used)
+  - CKV_AWS_337 # SSM SecureString with a CMK (the AWS managed aws/ssm key is used)
+  - CKV_AWS_26  # SNS topic encryption (CloudWatch alarms cannot publish with the AWS managed key)
+  # Cost: paid monitoring features not needed for a lab
+  - CKV_AWS_338 # 1-year log retention (14 days for app logs, 7 days for flow logs)
+  - CKV_AWS_126 # EC2 detailed monitoring (1-minute metrics)
+  - CKV_AWS_118 # RDS enhanced monitoring
+  - CKV_AWS_353 # RDS Performance Insights
+  - CKV2_AWS_30 # PostgreSQL query logging (noise and ingestion cost)
+  # Design decisions
+  - CKV_AWS_130 # Public subnets assign public IPs: the API host lives there by design
+  - CKV_AWS_260 # Port 80 open to the internet: it is the public API (restrict with allowed_http_cidrs)
+  - CKV_AWS_51  # Mutable tags: CI pushes "latest" plus an immutable short-SHA tag used for rollback
+  - CKV2_AWS_34 # Only the password is secret; host, name and user are plain String parameters
+  - CKV_AWS_394 # AZs are selected dynamically and limited by az_count
+  # State bucket (bootstrap): versioned, encrypted, private and TLS-only already
+  - CKV_AWS_18  # Access logging would need a second bucket just for logs
+  - CKV_AWS_144 # Cross-region replication is overkill for a lab state file
+  - CKV_AWS_145 # SSE-S3 (AES-256) instead of a KMS CMK
+  - CKV2_AWS_62 # No consumer for S3 event notifications

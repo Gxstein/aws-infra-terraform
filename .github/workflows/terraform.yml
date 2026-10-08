@@ -1,0 +1,113 @@
+name: terraform
+
+on:
+  pull_request:
+    paths:
+      - "terraform/**"
+      - "bootstrap/**"
+      - ".checkov.yaml"
+      - ".github/workflows/terraform.yml"
+  push:
+    branches: [main]
+    paths:
+      - "terraform/**"
+      - "bootstrap/**"
+      - ".checkov.yaml"
+      - ".github/workflows/terraform.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: fmt + validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Check formatting
+        run: terraform fmt -check -recursive -diff
+
+      - name: Validate bootstrap stack
+        working-directory: bootstrap
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+      - name: Validate main stack
+        working-directory: terraform
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+  security:
+    name: checkov (IaC security scan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Checkov
+        run: pip install checkov==3.3.23
+
+      - name: Scan Terraform code
+        run: checkov -d . --config-file .checkov.yaml
+
+  plan:
+    name: plan
+    needs: [validate, security]
+    # Runs only after the AWS side is configured (see README > CI/CD)
+    if: github.event_name == 'pull_request' && vars.AWS_ROLE_ARN != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required to request the OIDC token
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+      TF_VAR_aws_region: ${{ vars.AWS_REGION || 'us-east-1' }}
+      TF_VAR_alert_email: ${{ vars.ALERT_EMAIL }}
+      TF_VAR_state_bucket_name: ${{ vars.TF_STATE_BUCKET }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC, no access keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Init with remote state
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="key=aws-infra-terraform/dev/terraform.tfstate" \
+            -backend-config="region=${AWS_REGION}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+
+      - name: Plan
+        run: terraform plan -input=false -no-color | tee plan.txt
+
+      - name: Publish plan in the job summary
+        if: always()
+        run: |
+          {
+            echo "### terraform plan"
+            echo '```'
+            tail -c 60000 plan.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
